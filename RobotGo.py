@@ -1,51 +1,96 @@
 import serial
-from adafruit_motor import motor as Motor
 import time
 import board
 import RPi.GPIO as GPIO
+from checkTotem import viewTotem
 from adafruit_motorkit import MotorKit
 
-kit=MotorKit(i2c=board.I2C())
-
-
+# Setup
+kit = MotorKit(i2c=board.I2C())
 GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.OUT)
+pwm = GPIO.PWM(17, 50)
+pwm.start(0)
 
-GPIO.setup(17,GPIO.OUT)
-p = GPIO.PWM(17,50)
-p.start(0)
+# Center servo
+pwm.ChangeDutyCycle(10)
+time.sleep(0.3)
+pwm.ChangeDutyCycle(0)
 
-p.ChangeDutyCycle(7)
-p.ChangeDutyCycle(0)
-#serial port for bluetooth
-ser = serial.Serial("/dev/rfcomm0", 9600, timeout = 1)
+# Serial setup for Bluetooth
+ser = serial.Serial("/dev/rfcomm0", 9600, timeout=1)
 ser.reset_input_buffer()
-#set up motor
-speedLeft =0
-speedRight =0
-kit.motor1.throttle=speedLeft
-kit.motor2.throttle=speedRight
-while True:
-	line = ser.read().decode("utf-8")
-	print(line)
-	if('1' in line):
-		speedLeft = 0.75 #forward
-		speedRight= 0.75
-		p.ChangeDutyCycle(7)
 
-	elif('2' in line):
-		speedLeft = 0.75 #right
-		speedRight = 0.5
-		p.ChangeDutyCycle(11)
-	elif('3' in line):
-		speedLeft = 0.5 #left
-		speedRight = 0.75
-		p.ChangeDutyCycle(5)
-	elif('4' in line):
-		speedLeft = 0 #slow
-		speedRight = 0
-		p.ChangeDutyCycle(7)
+# Initial motor speeds
+speed_left = 0
+speed_right = 0
+kit.motor1.throttle = speed_left
+kit.motor2.throttle = speed_right
 
-	kit.motor1.throttle=speedLeft
-	kit.motor2.throttle=speedRight
-p.stop()
-GPIO.cleanup()
+# Duty cycles for servo directions
+SERVO_CENTER = 8
+SERVO_RIGHT = 6       
+SERVO_LEFT = 10
+SERVO_STOP = 0
+
+
+try:
+    while True:
+        totem = viewTotem()
+        print(totem)
+        if totem != "no":
+            if totem == "red":
+                speed_left = speed_right = 0.99
+                pwm.ChangeDutyCycle(SERVO_CENTER)
+                time.sleep(2)
+                continue
+
+            elif totem == "green":
+                speed_left = speed_right = 0
+                pwm.ChangeDutyCycle(SERVO_CENTER)
+                time.sleep(2)
+                continue
+            elif totem == "yellow":
+                # Simulate turning behavior
+                kit.motor1.throttle = 0.25
+                kit.motor2.throttle = 0.5
+                time.sleep(1)
+                kit.motor1.throttle = 0.75
+                kit.motor2.throttle = 0.5
+                time.sleep(1)
+                continue  # Skip the rest of the loop
+        else:
+            line = ser.read().decode("utf-8").strip()
+            if line == "0":
+                speed_left=speed_right = 0
+            elif line == "1":
+                speed_left = speed_right = 0.75
+                pwm.ChangeDutyCycle(SERVO_CENTER)
+                time.sleep(.2)
+                pwm.ChangeDutyCycle(SERVO_STOP)
+            elif line == "2":
+                speed_left = 0.75
+                speed_right = 0.5
+                pwm.ChangeDutyCycle(SERVO_RIGHT)
+                time.sleep(.2)
+                pwm.ChangeDutyCycle(SERVO_STOP)
+            elif line == "3":
+                speed_left = 0.5
+                speed_right = 0.75
+                pwm.ChangeDutyCycle(SERVO_LEFT)
+                time.sleep(.2)
+                pwm.ChangeDutyCycle(SERVO_STOP)
+            elif line == "4":
+                speed_left = speed_right = -0.5
+                pwm.ChangeDutyCycle(SERVO_CENTER)
+                time.sleep(.2)
+                pwm.ChangeDutyCycle(SERVO_STOP)
+            
+
+        # Apply motor speeds
+        kit.motor1.throttle = speed_left
+        kit.motor2.throttle = speed_right
+                                                                                           
+finally:
+    pwm.stop()
+    GPIO.cleanup()
