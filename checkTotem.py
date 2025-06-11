@@ -1,43 +1,49 @@
 import cv2
 import numpy as np
-import time
-from tensorflow.keras.models import load_model
-from tensorflow.keras.utils import img_to_array
+import tensorflow as tf
 from picamera2 import Picamera2
 
-# Load the model
-model = load_model("/home/robotics/Downloads/RoboCarV1.keras")
+# Load the TFLite model once
+interpreter = tf.lite.Interpreter(model_path="/home/robotics/Downloads/model_quant.tflite")
+interpreter.allocate_tensors()
 
-# Define labels
+# Get input and output tensor details
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+# Define class labels and threshold
 class_labels = ["green", "red", "yellow"]
+confidence_threshold = 0.70
 
-# Initialize camera
+# Initialize camera once
 camera = Picamera2()
 camera.start()
 
-try:
-    while True:
+def viewTotem():
+    try:
         frame = camera.capture_array()
 
-        # Resize and preprocess the frame
+        # Convert and resize
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
-        resized = cv2.resize(frame_rgb, (150, 150))
+        resized = cv2.resize(frame_rgb, (150, 150), interpolation=cv2.INTER_AREA)
 
-        image = img_to_array(resized) / 255.0
-        image = np.expand_dims(image, axis=0)
+        # Normalize and reshape
+        image = np.expand_dims(resized.astype(np.float32) / 255.0, axis=0)
 
-        # Predict
-        prediction = model.predict(image)
-        class_index = np.argmax(prediction[0])
-        label = class_labels[class_index]
+        # Set tensor and run inference
+        interpreter.set_tensor(input_details[0]['index'], image)
+        interpreter.invoke()
+        output_data = interpreter.get_tensor(output_details[0]['index'])
 
-        print(f"Totem Color: {label}")
+        class_index = int(np.argmax(output_data[0]))
+        confidence = float(output_data[0][class_index])
 
-        # Break on pressing 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-finally:
-    camera.stop()
-    cv2.destroyAllWindows()
-
+        if confidence >= confidence_threshold:
+            return class_labels[class_index]
+        else:
+            return "no"
+    except Exception as e:
+        print("Error in viewTotem():", e)
+        return "no"
+while True:
+    print(viewTotem())
