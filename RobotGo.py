@@ -33,41 +33,76 @@ SERVO_RIGHT = 6
 SERVO_LEFT = 10
 SERVO_STOP = 0
 
+# functions
+def stopMotors():
+    kit.motor1.throttle = 0
+    kit.motor2.throttle = 0
 
+
+def setServo(direction):
+    if direction == "right":
+        pwm.ChangeDutyCycle(SERVO_RIGHT)
+    elif direction == "left":
+        pwm.ChangeDutyCycle(SERVO_LEFT)
+    else:
+        pwm.ChangeDutyCycle(SERVO_CENTER)
+    time.sleep(0.2)
+    pwm.ChangeDutyCycle(SERVO_STOP)
+
+def setSpeed(speedLeft, speedRight):
+    speed_left = speedLeft
+    speed_right = speedRight
+    kit.motor1.throttle = speed_left
+    kit.motor2.throttle = speed_right
+
+def redTotem():
+    speed_left = speed_right = 0.99
+    pwm.ChangeDutyCycle(SERVO_CENTER)
+    time.sleep(.2)
+    pwm.ChangeDutyCycle(SERVO_STOP)
+    time.sleep(2)
+
+def greenTotem():
+    speed_left = speed_right = 0
+    pwm.ChangeDutyCycle(SERVO_CENTER)
+    time.sleep(.2)
+    pwm.ChangeDutyCycle(SERVO_STOP)
+    time.sleep(2)
+
+def yellowTotem():
+    # Simulate turning behavior
+    kit.motor1.throttle = 0.25
+    kit.motor2.throttle = 0.5
+    time.sleep(1)
+    kit.motor1.throttle = 0.75
+    kit.motor2.throttle = 0.5
+    time.sleep(1)
+
+
+
+# Main Loop
 try:
     while True:
         totem = viewTotem()
         print(totem)
         if totem != "no":
             if totem == "red":
-                speed_left = speed_right = 0.99
-                pwm.ChangeDutyCycle(SERVO_CENTER)
-                time.sleep(2)
+                redTotem()
                 continue
-
             elif totem == "green":
-                speed_left = speed_right = 0
-                pwm.ChangeDutyCycle(SERVO_CENTER)
-                time.sleep(2)
+                greenTotem()
                 continue
             elif totem == "yellow":
                 # Simulate turning behavior
-                kit.motor1.throttle = 0.25
-                kit.motor2.throttle = 0.5
-                time.sleep(1)
-                kit.motor1.throttle = 0.75
-                kit.motor2.throttle = 0.5
-                time.sleep(1)
-                continue  # Skip the rest of the loop
+                yellowTotem()
+                continue  
         else:
             line = ser.read().decode("utf-8").strip()
             if line == "0":
                 speed_left=speed_right = 0
             elif line == "1":
-                speed_left = speed_right = 0.75
-                pwm.ChangeDutyCycle(SERVO_CENTER)
-                time.sleep(.2)
-                pwm.ChangeDutyCycle(SERVO_STOP)
+                setServo("center")
+                
             elif line == "2":
                 speed_left = 0.75
                 speed_right = 0.5
