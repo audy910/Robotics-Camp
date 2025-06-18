@@ -102,29 +102,17 @@ try:
                 speed_left=speed_right = 0
             elif line == "1":
                 setServo("center")
-                
+                setSpeed(0.75, 0.75)
             elif line == "2":
-                speed_left = 0.75
-                speed_right = 0.5
-                pwm.ChangeDutyCycle(SERVO_RIGHT)
-                time.sleep(.2)
-                pwm.ChangeDutyCycle(SERVO_STOP)
+                setServo("left")
+                setSpeed(.5, .75)
             elif line == "3":
-                speed_left = 0.5
-                speed_right = 0.75
-                pwm.ChangeDutyCycle(SERVO_LEFT)
-                time.sleep(.2)
-                pwm.ChangeDutyCycle(SERVO_STOP)
+                setServo("right")
+                setSpeed(.75, .5)
             elif line == "4":
-                speed_left = speed_right = -0.5
-                pwm.ChangeDutyCycle(SERVO_CENTER)
-                time.sleep(.2)
-                pwm.ChangeDutyCycle(SERVO_STOP)
+                setServo("center")
+                setSpeed(-.5)
             
-
-        # Apply motor speeds
-        kit.motor1.throttle = speed_left
-        kit.motor2.throttle = speed_right
                                                                                            
 finally:
     pwm.stop()
