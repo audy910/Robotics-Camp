@@ -111,7 +111,7 @@ try:
                 setSpeed(.75, .5)
             elif line == "4":
                 setServo("center")
-                setSpeed(-.5)
+                setSpeed(-.5, -.5)
             
                                                                                            
 finally:
