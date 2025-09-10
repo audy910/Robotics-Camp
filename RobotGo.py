@@ -6,25 +6,26 @@ from checkTotem import viewTotem
 from adafruit_motorkit import MotorKit
 
 # Setup
-kit = MotorKit(i2c=board.I2C())
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(17, GPIO.OUT)
-pwm = GPIO.PWM(17, 50)
-pwm.start(0)
+kit = MotorKit(i2c=board.I2C())     
+GPIO.setmode(GPIO.BCM)              # Setting up Broadcom Chip GPIO numbering to refer to pins on board
+GPIO.setup(17, GPIO.OUT)            # Make pin GPIO17 the output (send a signal to servo)
+pwm = GPIO.PWM(17, 50)              # Pulse width modulation, controls servo at pin GPI017 arms angle
+pwm.start(0)                        # Start PWM with 0% duty cycle so stays in place
 
 # Center servo
-pwm.ChangeDutyCycle(10)
-time.sleep(0.3)
-pwm.ChangeDutyCycle(0)
+pwm.ChangeDutyCycle(10)             # Center the servo with 10% duty cycle
+time.sleep(0.3)                     # Give servo time to move arms
+pwm.ChangeDutyCycle(0)              # Stops sending signal to pin GPI017, stays at center
 
 # Serial setup for Bluetooth
-ser = serial.Serial("/dev/rfcomm0", 9600, timeout=1)
+ser = serial.Serial("/dev/rfcomm0", 9600, timeout=1) # Recieve commands from joystick
 ser.reset_input_buffer()
 
 # Initial motor speeds
+# Can set motor speeds to any decimal value -0.5 to 1 where -0.5 is reverse direction, 0 is stop, and 1 is max speed
 speed_left = 0
 speed_right = 0
-kit.motor1.throttle = speed_left
+kit.motor1.throttle = speed_left 
 kit.motor2.throttle = speed_right
 
 # Duty cycles for servo directions
@@ -37,7 +38,6 @@ SERVO_STOP = 0
 def stopMotors():
     kit.motor1.throttle = 0
     kit.motor2.throttle = 0
-
 
 def setServo(direction):
     if direction == "right":
