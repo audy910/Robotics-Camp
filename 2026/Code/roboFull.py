@@ -160,7 +160,7 @@ try:
  
         elif command == 'bluetooth':
             speed_left, speed_right, servo_direction = get_bluetooth()
-            kit.motor1.throttle = speed_left
+            kit.motor1.throttle = -speed_left
             kit.motor2.throttle = speed_right
             pi.set_servo_pulsewidth(servo_gpio, servo_direction)
             

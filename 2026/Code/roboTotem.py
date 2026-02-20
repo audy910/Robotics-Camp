@@ -6,7 +6,7 @@ from picamera2.encoders import Quality
 from ultralytics import YOLO
 
 # Load the YOLO model once
-model_path="/home/robotics/Downloads/yolo/best.pt"
+model_path="PASTE_FILE_PATH_HERE"
 model = YOLO(model_path, task='detect')
 labels = model.names
 
